@@ -3,7 +3,7 @@ use std::f64::consts::PI;
 pub use dow::DayOfWeek;
 use std::convert::TryInto;
 
-mod dow;
+pub mod dow;
 
 pub const TZ: f64 = 7.0;
 
@@ -25,21 +25,21 @@ pub trait Calendar {
 }
 
 #[derive(Debug, Clone)]
-struct Day {
-    day: i32,
-    month: i32,
-    year: i32,
+pub struct Day {
+    pub day: i32,
+    pub month: i32,
+    pub year: i32,
 }
 
 #[derive(Debug, Clone)]
 pub struct GregorianDay {
-    inner: Day,
+    pub inner: Day,
 }
 
 #[derive(Debug)]
 pub struct LunarDay {
-    inner: Day,
-    leap: bool,
+    pub inner: Day,
+    pub leap: bool,
 }
 
 #[derive(Debug)]

@@ -1,7 +1,7 @@
+use std::convert::TryFrom;
 use std::fmt::{Display, Error, Formatter};
-use std::convert::{TryFrom};
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum DayOfWeek {
     Sunday = 0,
     Monday = 1,
@@ -25,7 +25,7 @@ impl TryFrom<u8> for DayOfWeek {
             4 => Ok(Thursday),
             5 => Ok(Friday),
             6 => Ok(Saturday),
-            _ => Err("Invalid day of week".to_string())
+            _ => Err("Invalid day of week".to_string()),
         }
     }
 }
@@ -33,5 +33,15 @@ impl TryFrom<u8> for DayOfWeek {
 impl Display for DayOfWeek {
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
         f.write_str(format!("{:?}", self).as_str())
+    }
+}
+
+pub trait ShortTitle {
+    fn short_title(&self) -> String;
+}
+
+impl ShortTitle for DayOfWeek {
+    fn short_title(&self) -> String {
+        (&format!("{}", self)[..3]).to_string()
     }
 }
