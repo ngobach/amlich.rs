@@ -1,10 +1,20 @@
 use amlich::{dow::ShortTitle, Calendar, DayOfWeek, GregorianMonth};
+use std::any::Any;
 use std::convert::TryInto;
 use std::fmt::{Display, Error, Formatter};
-use termion::{clear, color, cursor, style};
+use std::io::Read;
+use std::time::Duration;
+use tui::backend::RustboxBackend;
+use tui::widgets::{Block, Borders, Widget};
+use tui::Terminal;
 
-pub struct Table {
-    inner: GregorianMonth,
+pub struct CalTable {
+    month: GregorianMonth,
+    terminal: Terminal<RustboxBackend>,
+}
+
+fn get_current_month() -> GregorianMonth {
+    GregorianMonth::new(2019, 9)
 }
 
 fn too_small_digits(s: &str) -> String {
@@ -30,60 +40,44 @@ fn too_small_digits(s: &str) -> String {
     ss
 }
 
-impl Table {
-    const CELL_WIDTH: u8 = 3;
-    const CELL_HEIGHT: u8 = 2;
+const SLEEP_INTERVAL: Duration = Duration::from_millis(10);
 
-    pub fn of(month: GregorianMonth) -> Self {
-        Self { inner: month }
+fn read_key() -> Result<u8, std::io::Error> {
+    let mut buf = [0u8, 1];
+    while std::io::stdin().read(&mut buf)? == 0 {
+        std::thread::sleep(SLEEP_INTERVAL);
     }
-
-    fn render(&self) -> String {
-        let mut buffer = format!("{}", clear::All);
-        buffer.push_str(color::Green.fg_str());
-        let cursor_down = format!("{}", cursor::Down(1));
-        let cursor_up = format!("{}", cursor::Up(1));
-        for i in 0..7 {
-            let day: DayOfWeek = i.try_into().unwrap();
-            buffer.push_str(day.short_title().as_str());
-            buffer.push(' ');
-        }
-        buffer.push_str(color::Reset.fg_str());
-        buffer.push_str("\n\n\n");
-        let bound = self.inner.get_bound();
-        let blank = bound.iter().next().unwrap().day_of_week() as u32;
-        for i in 0..blank {
-            buffer.push_str(
-                format!(
-                    "{}   {}    ",
-                    format!("{}", cursor::Up(1)),
-                    format!("{}{}", cursor::Down(1), cursor::Left(3)),
-                )
-                .as_str(),
-            );
-        }
-        for day in bound.iter() {
-            if day.day_of_week() == DayOfWeek::Sunday {
-                buffer.push_str("\n\n\n");
-            }
-
-            buffer.push_str(
-                format!(
-                    "{}{:3}{}{:3} ",
-                    format!("{}", cursor::Up(1)),
-                    day.inner.day,
-                    format!("{}{}", cursor::Down(1), cursor::Left(3)),
-                    too_small_digits(format!("{}", day.to_lunar().inner.day).as_str()),
-                )
-                .as_str(),
-            );
-        }
-        buffer
-    }
+    Ok(buf[0])
 }
 
-impl Display for Table {
-    fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
-        f.write_str(self.render().as_str())
+impl CalTable {
+    pub fn new() -> CalTable {
+        let terminal = Terminal::new(RustboxBackend::new().unwrap()).unwrap();
+        CalTable {
+            month: get_current_month(),
+            terminal,
+        }
+    }
+
+    pub fn run(&mut self) {
+        let ref mut term = self.terminal;
+        let mut s = String::from("AHHI");
+        term.draw(|mut f| {
+            let size = f.size();
+            Block::default()
+                .title(s.as_str())
+                .borders(Borders::ALL)
+                .render(&mut f, size);
+        });
+        let k = read_key().unwrap();
+        s = format!("{}", k);
+        term.draw(|mut f| {
+            let size = f.size();
+            Block::default()
+                .title(s.as_str())
+                .borders(Borders::ALL)
+                .render(&mut f, size);
+        });
+        let k = read_key().unwrap();
     }
 }
