@@ -5,7 +5,8 @@ use std::fmt::{Display, Error, Formatter};
 use std::io::Read;
 use std::time::Duration;
 use tui::backend::RustboxBackend;
-use tui::widgets::{Block, Borders, Widget};
+use tui::style::{Color, Style};
+use tui::widgets::{Block, Borders, Row, Table, Widget};
 use tui::Terminal;
 
 pub struct CalTable {
@@ -58,26 +59,16 @@ impl CalTable {
             terminal,
         }
     }
-
     pub fn run(&mut self) {
-        let ref mut term = self.terminal;
         let mut s = String::from("AHHI");
-        term.draw(|mut f| {
-            let size = f.size();
-            Block::default()
-                .title(s.as_str())
-                .borders(Borders::ALL)
-                .render(&mut f, size);
-        });
-        let k = read_key().unwrap();
-        s = format!("{}", k);
-        term.draw(|mut f| {
-            let size = f.size();
-            Block::default()
-                .title(s.as_str())
-                .borders(Borders::ALL)
-                .render(&mut f, size);
-        });
-        let k = read_key().unwrap();
+        loop {
+            let mut table = get_table();
+            self.terminal.draw(|mut f| {
+                let size = f.size();
+                table.render(&mut f, size);
+            });
+            read_key().unwrap();
+            break;
+        }
     }
 }
