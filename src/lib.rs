@@ -58,7 +58,7 @@ impl GregorianDayRange {
     pub fn iter(&self) -> GregorianIter {
         GregorianIter {
             inner: self.begin.clone(),
-            left: self.end.to_julian_days() - self.begin.to_julian_days(),
+            left: self.end.to_julian_days() - self.begin.to_julian_days() + 1,
         }
     }
 }
@@ -113,7 +113,7 @@ impl GregorianMonth {
             },
         }
     }
-    pub fn next(&self) -> GregorianMonth {
+    pub fn previous(&self) -> GregorianMonth {
         let mut year = self.year;
         let mut month = self.month - 1;
         if month <= 0 {
@@ -122,7 +122,7 @@ impl GregorianMonth {
         }
         GregorianMonth { month, year }
     }
-    pub fn previous(&self) -> GregorianMonth {
+    pub fn next(&self) -> GregorianMonth {
         let mut year = self.year;
         let mut month = self.month + 1;
         if month > 12 {
@@ -130,6 +130,10 @@ impl GregorianMonth {
             year += 1;
         }
         GregorianMonth { month, year }
+    }
+
+    pub fn to_title(&self) -> String {
+        format!("{:02} - {:04}", self.month, self.year)
     }
 }
 
