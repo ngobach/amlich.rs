@@ -2,6 +2,8 @@
 name = "amlich"
 version = "0.0.1"
 authors = ["Ngo Xuan Bach <thanbaiks@gmail.com>"]
+description = "A library and CLI application for Vietnamese Lunar Calendar"
+license = "MIT"
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
