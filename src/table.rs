@@ -1,17 +1,13 @@
-use amlich::{dow::ShortTitle, Calendar, DayOfWeek, GregorianMonth};
-use std::any::Any;
-use std::convert::TryInto;
+use amlich::{Calendar, DayOfWeek, GregorianMonth};
 use std::fmt::{Display, Error, Formatter};
-use std::io::Read;
-use std::time::Duration;
 use tui::backend::RustboxBackend;
 use tui::layout::{Constraint, Direction, Layout, Rect};
-use tui::style::{Color, Modifier, Style};
+use tui::style::{Color, Style};
 use tui::widgets::{Block, Borders, Paragraph, Row, Table, Text, Widget};
 use tui::Terminal;
 
 const TABLE_HEADER: &[&str] = &["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-const HELP_TEXT: &str = "Shortcuts: q - quit, h - prev month, l - next month";
+const HELP_TEXT: &str = "q: quit  h: prev month  l: next month";
 
 pub struct CalTable {
     month: GregorianMonth,
@@ -45,16 +41,6 @@ fn to_subscript(s: &str) -> String {
         ss.push(char_2_char(i));
     }
     ss
-}
-
-const SLEEP_INTERVAL: Duration = Duration::from_millis(10);
-
-fn read_key() -> Result<u8, std::io::Error> {
-    let mut buf = [0u8, 1];
-    while std::io::stdin().read(&mut buf)? == 0 {
-        std::thread::sleep(SLEEP_INTERVAL);
-    }
-    Ok(buf[0])
 }
 
 struct TableCell {
@@ -147,20 +133,37 @@ impl CalTable {
             .header_style(Style::default().fg(Color::Green));
             let txts = [Text::raw(HELP_TEXT)];
             let mut help_txt = Paragraph::new(txts.iter());
-            self.terminal.draw(|mut f| {
-                let size = f.size();
-                // Make layout
-                let mut chunks = tui::layout::Layout::default()
-                    .direction(Direction::Vertical)
-                    .constraints(vec![Constraint::Min(0), Constraint::Length(1)])
-                    .split(size.clone());
-                if HELP_TEXT.len() as u16 <= size.width {
-                    let padding = (size.width - HELP_TEXT.len() as u16) / 2;
-                    chunks[1] = hcenter(&chunks[1], HELP_TEXT.len() as u16);
-                }
-                table.render(&mut f, vcenter(&hcenter(&chunks[0], 38), 10));
-                help_txt.render(&mut f, chunks[1]);
-            });
+            let desc = [Text::styled(
+                format!(
+                    "{} to {}",
+                    self.month.get_bound().to_tuple().0.to_lunar(),
+                    self.month.get_bound().to_tuple().1.to_lunar()
+                ),
+                Style::default().fg(Color::Cyan),
+            )];
+            let mut desc_txt = Paragraph::new(desc.into_iter());
+            self.terminal
+                .draw(|mut f| {
+                    let size = f.size();
+                    // Make layout
+                    let mut chunks = tui::layout::Layout::default()
+                        .direction(Direction::Vertical)
+                        .constraints(vec![Constraint::Min(0), Constraint::Length(1)])
+                        .split(size.clone());
+                    if HELP_TEXT.len() as u16 <= size.width {
+                        chunks[1] = hcenter(&chunks[1], HELP_TEXT.len() as u16);
+                    }
+                    let table_area = vcenter(&hcenter(&chunks[0], 38), 10);
+                    table.render(&mut f, table_area.clone());
+                    let desc_area = Rect {
+                        y: table_area.y + table_area.height,
+                        height: 1,
+                        ..table_area
+                    };
+                    desc_txt.render(&mut f, hcenter(&desc_area, 30));
+                    help_txt.render(&mut f, chunks[1]);
+                })
+                .unwrap();
             let t = self.terminal.backend().rustbox().poll_event(false).unwrap();
             if let rustbox::Event::KeyEvent(rustbox::Key::Char(c)) = t {
                 match c.to_lowercase().to_string().chars().next().unwrap() {

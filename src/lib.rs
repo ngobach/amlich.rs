@@ -2,6 +2,7 @@ use std::f64::consts::PI;
 
 pub use dow::DayOfWeek;
 use std::convert::TryInto;
+use std::fmt::{Display, Error, Formatter};
 
 pub mod dow;
 
@@ -42,6 +43,18 @@ pub struct LunarDay {
     pub leap: bool,
 }
 
+impl Display for LunarDay {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
+        f.write_str(
+            format!(
+                "{:02}/{:02}/{:04} AL",
+                self.inner.day, self.inner.month, self.inner.year
+            )
+            .as_str(),
+        )
+    }
+}
+
 #[derive(Debug)]
 pub struct GregorianMonth {
     year: i32,
@@ -60,6 +73,10 @@ impl GregorianDayRange {
             inner: self.begin.clone(),
             left: self.end.to_julian_days() - self.begin.to_julian_days() + 1,
         }
+    }
+
+    pub fn to_tuple(&self) -> (GregorianDay, GregorianDay) {
+        (self.begin.clone(), self.end.clone())
     }
 }
 
@@ -133,7 +150,7 @@ impl GregorianMonth {
     }
 
     pub fn to_title(&self) -> String {
-        format!("{:02} - {:04}", self.month, self.year)
+        format!("Am lich {:02}/{:04}", self.month, self.year)
     }
 }
 
@@ -357,27 +374,4 @@ impl Calendar for LunarDay {
             leap: lunar_leap == 1,
         }
     }
-}
-
-pub fn test() {
-    eprintln!("> {:?}", GregorianDay::from_julian_days(2000000));
-    eprintln!("< 14, 9, 763");
-
-    eprintln!("> {:?}", GregorianDay::new(6, 9, 2019).to_julian_days());
-    eprintln!("< {:?}", 2458733);
-
-    eprintln!("> {}", LunarDay::get_new_moon_day(1234.0, TZ));
-    eprintln!("< {}", 2451461);
-
-    eprintln!("> {}", LunarDay::get_sun_longitude(2000000.0, TZ));
-    eprintln!("< {}", 5);
-
-    eprintln!("> {}", LunarDay::get_sun_longitude(3000000.0, TZ));
-    eprintln!("< {}", 4);
-
-    eprintln!("> {}", LunarDay::get_lunar_month_11(2019.0, TZ));
-    eprintln!("< {}", 2458814);
-
-    eprintln!("> {}", LunarDay::get_leap_month_offset(2458814.0, TZ));
-    eprintln!("< {}", 6);
 }
