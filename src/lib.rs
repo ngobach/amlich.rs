@@ -47,7 +47,22 @@ impl Display for LunarDay {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
         f.write_str(
             format!(
-                "{:02}/{:02}/{:04} AL",
+                "{:02}/{:02}/{:04}{}AL",
+                self.inner.day,
+                self.inner.month,
+                self.inner.year,
+                if self.leap { "*" } else { " " }
+            )
+            .as_str(),
+        )
+    }
+}
+
+impl Display for GregorianDay {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
+        f.write_str(
+            format!(
+                "{:02}/{:02}/{:04}",
                 self.inner.day, self.inner.month, self.inner.year
             )
             .as_str(),
@@ -104,12 +119,12 @@ impl GregorianMonth {
         Self { month, year }
     }
     pub fn get_bound(&self) -> GregorianDayRange {
-        let mut last_day_of_month = 31;
+        let mut last_day_of_month = 32;
         while GregorianDay::from_julian_days(
             GregorianDay::new(last_day_of_month, self.month, self.year).to_julian_days(),
         )
         .inner
-        .day != last_day_of_month
+        .day > 1
         {
             last_day_of_month -= 1;
         }
@@ -125,7 +140,7 @@ impl GregorianMonth {
                 inner: Day {
                     month: self.month,
                     year: self.year,
-                    day: last_day_of_month,
+                    day: last_day_of_month - 1,
                 },
             },
         }

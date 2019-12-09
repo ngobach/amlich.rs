@@ -1,4 +1,5 @@
 use amlich::{Calendar, DayOfWeek, GregorianMonth};
+use chrono::prelude::*;
 use std::fmt::{Display, Error, Formatter};
 use tui::backend::RustboxBackend;
 use tui::layout::{Constraint, Direction, Layout, Rect};
@@ -15,7 +16,8 @@ pub struct CalTable {
 }
 
 fn get_current_month() -> GregorianMonth {
-    GregorianMonth::new(2019, 9)
+    let now = Local::today();
+    GregorianMonth::new(now.year(), now.month() as i32)
 }
 
 fn to_subscript(s: &str) -> String {
