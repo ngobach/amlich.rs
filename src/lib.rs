@@ -47,7 +47,22 @@ impl Display for LunarDay {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
         f.write_str(
             format!(
-                "{:02}/{:02}/{:04} AL",
+                "{:02}/{:02}/{:04}{}AL",
+                self.inner.day,
+                self.inner.month,
+                self.inner.year,
+                if self.leap { "*" } else { " " }
+            )
+            .as_str(),
+        )
+    }
+}
+
+impl Display for GregorianDay {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
+        f.write_str(
+            format!(
+                "{:02}/{:02}/{:04}",
                 self.inner.day, self.inner.month, self.inner.year
             )
             .as_str(),
@@ -104,12 +119,12 @@ impl GregorianMonth {
         Self { month, year }
     }
     pub fn get_bound(&self) -> GregorianDayRange {
-        let mut last_day_of_month = 31;
+        let mut last_day_of_month = 32;
         while GregorianDay::from_julian_days(
             GregorianDay::new(last_day_of_month, self.month, self.year).to_julian_days(),
         )
         .inner
-        .day != last_day_of_month
+        .day > 1
         {
             last_day_of_month -= 1;
         }
@@ -125,7 +140,7 @@ impl GregorianMonth {
                 inner: Day {
                     month: self.month,
                     year: self.year,
-                    day: last_day_of_month,
+                    day: last_day_of_month - 1,
                 },
             },
         }
@@ -266,7 +281,7 @@ impl LunarDay {
 
     // Check: Passed
     fn get_lunar_month_11(y: f64, tz: f64) -> f64 {
-        let off = GregorianDay::new(32, 12, y as i32).to_julian_days() as f64 - 2415021.0;
+        let off = GregorianDay::new(31, 12, y as i32).to_julian_days() as f64 - 2415021.0;
         let k = (off / 29.530588853).floor();
         let mut nm = Self::get_new_moon_day(k, tz);
         let sun_long = Self::get_sun_longitude(nm, tz); // sun longitude at local midnight
@@ -335,7 +350,7 @@ impl Calendar for LunarDay {
         if month_start > jd {
             month_start = Self::get_new_moon_day(k, TZ);
         }
-        let mut a11 = Self::get_new_moon_day(greg.inner.year as f64, TZ);
+        let mut a11 = Self::get_lunar_month_11(greg.inner.year as f64, TZ);
         let mut b11 = a11;
         let mut lunar_year;
         if a11 >= month_start {
